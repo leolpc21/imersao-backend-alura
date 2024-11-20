@@ -40,11 +40,21 @@ app.get("/posts", (req, res) => {
   res.status(200).json(posts);
 });
 
+/**
+ * Busca um post pelo seu id.
+ * @param {number} id - o id do post
+ * @returns {object|null} o post encontrado ou null se n o encontrado
+ */
 function buscarPostPorId(id) {
-  return posts.findIndex((post) => post.id === Number(id));
+  const index = posts.findIndex((post) => post.id === Number(id));
+  return posts[index];
 }
 
 app.get("/posts/:id", (req, res) => {
-  const index = buscarPostPorId(req.params.id);
-  res.status(200).json(posts[index]);
+  const post = buscarPostPorId(req.params.id);
+  if (post) {
+    res.status(200).json(post);
+  } else {
+    res.status(404).json({ message: "Post não encontrado" });
+  }
 });
