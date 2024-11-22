@@ -1,7 +1,8 @@
 // Importa as funções para obter todos os posts e criar um novo post do módulo 'postsModel.js'.
 // Importa o módulo 'fs' para realizar operações com o sistema de arquivos.
-import { getTodosPosts, criarPost } from "../models/postsModel.js";
+import { getTodosPosts, criarPost, atualizarPost } from "../models/postsModel.js";
 import fs from "fs";
+import gerarDescricaoComGemini from "../services/serviceGimini.js";
 
 // Função assíncrona para listar todos os posts.
 // Retorna uma resposta JSON com status 200 e os posts como corpo da resposta.
@@ -38,7 +39,7 @@ export async function uploadImagem(req, res) {
   // Cria um objeto com os dados do novo post, incluindo o nome original do arquivo da imagem.
   const novoPost = {
     descricao: "",
-    imagem: req.file.originalname,
+    imgUrl: req.file.originalname,
     alt: ""
   };
 
@@ -52,6 +53,31 @@ export async function uploadImagem(req, res) {
     // Retorna uma resposta JSON com status 200 e o post criado como corpo da resposta.
     res.status(200).json(postCriado);
     // Captura qualquer erro que possa ocorrer durante o processo de upload da imagem.
+  } catch (error) {
+    // Loga a mensagem de erro no console para facilitar o debug.
+    console.error(error.message);
+    // Retorna uma resposta JSON com status 500 (Erro interno do servidor) e uma mensagem de erro genérica.
+    res.status(500).json({ "error": "Falha no servidor." });
+  }
+}
+
+export async function atualizarNovoPost(req, res) {
+  const id = req.params.id;
+  const urlImg = `http://localhost:3000/${id}.png`;
+
+  try {
+    const imgBuffer = fs.readFileSync(`./uploads/${id}.png`);
+    const descricao = await gerarDescricaoComGemini(imgBuffer);
+
+    const post = {
+      descricao: descricao,
+      imgUrl: urlImg,
+      alt: req.body.alt
+    }
+    const postNovo = await atualizarPost(id, post);
+    // Retorna uma resposta JSON com status 200 e o post criado como corpo da resposta.
+    res.status(200).json(postNovo);
+    // Captura qualquer erro que possa ocorrer durante a criação do post.
   } catch (error) {
     // Loga a mensagem de erro no console para facilitar o debug.
     console.error(error.message);
